@@ -2,6 +2,9 @@ from functools import wraps
 from typing import Callable
 
 
+cache_dict = dict()
+
+
 def read_cache_dict() -> dict:
     result = cache_dict
     return result
@@ -10,27 +13,24 @@ def read_cache_dict() -> dict:
 def cache(func: Callable) -> Callable:
     func_name = func.__name__
 
-    global cache_dict
-    cache_dict = dict()
-    global_result = read_cache_dict()
-
     @wraps(func)
     def wrapper(*args) -> list:
         one_key_list = [func_name, args]
         one_key = tuple(one_key_list)
-        result_inner = global_result.get(one_key)
+        result_inner = cache_dict.get(one_key)
         if result_inner is None:
             print("Calculating new result")
             result_inner = func(*args)
-            global_result[one_key] = result_inner
+            cache_dict[one_key] = result_inner
         else:
             print("Getting from cache")
-        save_cache_dict(global_result)
+        # save_cache_dict(cache_dict)
         return result_inner
 
+    clean_cache_dict()
     return wrapper
 
 
-def save_cache_dict(global_result: dict) -> None:
-    for key, value in global_result.items():
-        cache_dict[key] = value
+def clean_cache_dict() -> None:
+    global cache_dict
+    cache_dict = dict()
